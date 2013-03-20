@@ -73,6 +73,8 @@ public class Mazewar extends JFrame {
          * The table the displays the scores.
          */
         private JTable scoreTable = null;
+
+		private ClientHandler ch;
         
         /** 
          * Create the textpane statically so that we can 
@@ -138,6 +140,27 @@ public class Mazewar extends JFrame {
                 if((name == null) || (name.length() == 0)) {
                   Mazewar.quit();
                 }
+                
+                String host = JOptionPane.showInputDialog("Enter the hostname for the game server");
+                if((host == null) || (host.length() == 0)){
+                	Mazewar.quit();
+                }
+                
+                String portID = JOptionPane.showInputDialog("Enter the port for the game server");
+                if((portID == null) || (portID.length() == 0)){
+                	Mazewar.quit();
+                }
+                try{
+                	int port = Integer.parseInt(portID);
+                    ch = new ClientHandler(host, port, name);
+                }catch(NumberFormatException e){
+                	e.printStackTrace();
+                	System.err.println("ERROR: Port needs to be an int!!");
+        			System.exit(1);
+                }
+                
+                
+                ch.addMaze(maze);
                 
                 // You may want to put your network initialization code somewhere in
                 // here.
