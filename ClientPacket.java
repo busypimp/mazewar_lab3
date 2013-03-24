@@ -28,11 +28,11 @@ public class ClientPacket implements Serializable {
 	public int type = GENERAL_NULL;
 	public int errorCode = -1;
 	public String message;
-	public ClientEvent event;
+//	public ClientEvent event;
 	public ServerDataBean serverData;
 	public int event = 0;
 	public int sequence = 0;
-	public ServerDataBean serverData;
+//	public ServerDataBean serverData;
 	public String clientName = null;
 	public ConnectionDetails connDetails;
 }

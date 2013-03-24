@@ -27,7 +27,7 @@ public class ClientHandler extends Thread{
 	private ClientPacket packetFromClient;
 	private Map nameToClientMap;
 	
-	private Hashtable<Integer, ClientPacket> seqEventQueue;
+	private HashMap<Integer, ClientPacket> seqEventQueue;
 	public ClientHandler(String address, int port, String name){
 		
 		try {
@@ -40,12 +40,10 @@ public class ClientHandler extends Thread{
 			registerClient(name, port, address);
 			this.name = name;
 			this.mySeqNum = 1;
-			Hashtable<Integer, ClientPacket> seqEventQueue = new Hashtable<Integer, ClientPacket>() ;
+			HashMap<Integer, ClientPacket> seqEventQueue = new HashMap<Integer, ClientPacket>() ;
 			
 			//This is saying the event sequencer should be run at the same place as the naming service server and port num is below!
 			int portSeq = port+2222;
-			this.seqout = new ObjectOutputStream(seqSock.getOutputStream());
-			this.seqin = new ObjectInputStream(seqSock.getInputStream());
 			
 		} catch (UnknownHostException e) {
 			
@@ -213,6 +211,7 @@ public class ClientHandler extends Thread{
 				 */
 			}
 		}
+	}
 		
 	public void registerClient(String name){
 		GUIClient client = new GUIClient(name);
@@ -252,7 +251,7 @@ public class ClientHandler extends Thread{
 		
 		assert(out != null);
 		try {
-			seqout.writeObject(packetToServer);
+			out.writeObject(packetToServer);
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
