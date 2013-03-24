@@ -27,6 +27,7 @@ public class ClientPacket implements Serializable {
 	public int errorCode = -1;
 	public String message;
 	public ClientEvent event;
-//	public ServerDataBean serverData;
+	public ServerDataBean serverData;
 	public String clientName = null;
+	public ConnectionDetails connDetails;
 }

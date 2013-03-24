@@ -7,7 +7,7 @@ public class MazewarServer {
     public static void main(String[] args) throws IOException {
         ServerSocket serverSocket = null;
         boolean listening = true;
-//        ServerDataBean serverData = new ServerDataBean();
+        ServerDataBean serverData = new ServerDataBean();
 //        new MazewarBroadcast(serverData).start();
         
         try {
@@ -23,7 +23,8 @@ public class MazewarServer {
         }
 
         while (listening) {
-//        	new MazewarServerHandlerThread(serverSocket.accept(), getClientID(), serverData).start();
+        	new MazewarServerHandlerThread(serverSocket.accept(), getClientID(), serverData).start();
+//        	new MazewarServerHandlerThread(serverSocket.accept(), getClientID()).start();
         }
 
         serverSocket.close();

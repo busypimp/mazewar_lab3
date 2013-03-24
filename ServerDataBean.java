@@ -5,17 +5,21 @@ import java.util.Map;
 
 public class ServerDataBean implements Serializable{
 	
-	Map nameToConnMap;
+	HashMap nameToConnMap;
 	
 	public ServerDataBean(){
 		this.nameToConnMap = new HashMap();
 	}
 	
-	public synchronized void addClientDetails(String name, String host, int port){
+	public synchronized void addClientDetails(String name, ConnectionDetails details){
 		if(!this.nameToConnMap.containsKey(name)){
-			this.nameToConnMap.put(name, new ConnectionDetails(port, host));
+			this.nameToConnMap.put(name, details);
 		}else{
 			System.err.println("Name already in the map!!");
 		}
+	}
+	
+	public synchronized HashMap getNameToConnMap(){
+		return this.nameToConnMap;
 	}
 }
