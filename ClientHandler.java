@@ -1,3 +1,4 @@
+import java.awt.event.KeyEvent;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
@@ -15,12 +16,18 @@ import java.util.Set;
 public class ClientHandler extends Thread{
 	
 	private Socket sock;
+	private String name;
+	private int mySeqNum;
 	private Maze maze;
+
+	private Socket seqSock;
+	
 	private ObjectOutputStream out;
 	private ObjectInputStream in;
 	private ClientPacket packetFromClient;
 	private Map nameToClientMap;
 	
+	private Hashtable<Integer, ClientPacket> seqEventQueue;
 	public ClientHandler(String address, int port, String name){
 		
 		try {
@@ -31,6 +38,14 @@ public class ClientHandler extends Thread{
 			this.nameToClientMap = new HashMap();
 
 			registerClient(name, port, address);
+			this.name = name;
+			this.mySeqNum = 1;
+			Hashtable<Integer, ClientPacket> seqEventQueue = new Hashtable<Integer, ClientPacket>() ;
+			
+			//This is saying the event sequencer should be run at the same place as the naming service server and port num is below!
+			int portSeq = port+2222;
+			this.seqout = new ObjectOutputStream(seqSock.getOutputStream());
+			this.seqin = new ObjectInputStream(seqSock.getInputStream());
 			
 		} catch (UnknownHostException e) {
 			
@@ -49,18 +64,96 @@ public class ClientHandler extends Thread{
 	}
 	
 	public void run(){
-//		try{
-//			while((packetFromClient = (ClientPacket) in.readObject()) != null){
-			while(true){
+		try{
+			while((packetFromClient = (ClientPacket) in.readObject()) != null){
+//			while(true){
 			/*
 				 * do something don't just stand there
 				 */
+				switch (packetFromClient.type) {
+				case ClientPacket.SERVER_ACKNOWLEDGE:
+					System.out.println("ACK'ed");
+					break;
+				case ClientPacket.SERVER_RESPOND_PLAYERS:
+					//processPlayerList();
+					break;
+				case ClientPacket.SERVER_EVENT_BROADCAST:
+					processSeq();
+					break;
+				case ClientPacket.SERVER_RESPOND_SEQ:
+						broadcastClients();
+					break;
+				case ClientPacket.GENERAL_NULL:
+					break;
+				case ClientPacket.GENERAL_BYE:
+					System.out.println("Server Bye Functionality not yet implemented!!");
+					break;
+				default:
+					System.err.println("ERROR: Unknown packet!!");
+					System.exit(-1);
+				}
 			}
-//		}catch(ClassNotFoundException e){
-//			e.printStackTrace();
-//		} catch (IOException e) {
-//			e.printStackTrace();
-//		}
+		}catch(ClassNotFoundException e){
+			e.printStackTrace();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+	}
+	
+	private void broadcastClients() {
+		//Need to know how the client names and such are kept!
+		
+		
+	}
+	
+	private void processSeq() {
+		if(packetFromClient.sequence == (this.mySeqNum+1)) {
+			processEvent(packetFromClient);
+			this.mySeqNum++;
+			while(seqEventQueue.get(this.mySeqNum) != null){
+				processEvent(seqEventQueue.get(this.mySeqNum));
+				seqEventQueue.remove(this.mySeqNum);
+				this.mySeqNum++;
+			}
+		} else {
+			//This is when the seq number we got was too big. so put in the queue!
+			seqEventQueue.put(packetFromClient.sequence, packetFromClient);
+		}
+	}
+	
+	private void processEvent(ClientPacket fromClient) {
+		int event =  fromClient.event;
+		String name =  fromClient.clientName;
+		Client client = null;
+//		if(nameToClientMap.containsKey(name))
+//			client = (Client) nameToClientMap.get(name);
+		
+		//Need to know if this is in order or not.
+
+			if(event == ClientEvent.FIRE){
+				assert(client != null);
+				client.fire();
+			}else if(event == ClientEvent.JOINED){
+				System.out.println(name + " joins the game");
+	//			addNewClient(packetFromClient.clientName, packetFromClient.info);
+			}else if(event == ClientEvent.MOVE_BACKWARD){
+				assert(client != null);
+				client.backup();
+			}else if(event == ClientEvent.MOVE_FORWARD){
+				assert(client != null);
+				client.forward();
+			}else if(event == ClientEvent.QUIT && name.equals(this.name)){
+				Mazewar.quit();
+			}else if(event == ClientEvent.TURN_LEFT){
+				assert(client != null);
+				client.turnLeft();
+			}else if(event == ClientEvent.TURN_RIGHT){
+				assert(client != null);
+				client.turnRight();
+			}
+
+//		if(client != null)
+//			updateLocation(client);
 	}
 	
 	public void registerClient(String name, int port, String address){
@@ -121,5 +214,47 @@ public class ClientHandler extends Thread{
 			}
 		}
 		
+	public void registerClient(String name){
+		GUIClient client = new GUIClient(name);
+	}
+	
+	public void keyPressedInGUI(KeyEvent e){
+		//The server its sending to is the EventSequencerServerHandler
+		ClientPacket packetToServer = new ClientPacket();
+		packetToServer.type = ClientPacket.CLIENT_EVENT_SEQ;
+		packetToServer.clientName = this.name;
+
+		// If the user pressed Q, invoke the cleanup code and quit.
+		if ((e.getKeyChar() == 'q') || (e.getKeyChar() == 'Q')) {
+			packetToServer.event = ClientEvent.QUIT;
+			// Up-arrow moves forward.
+		} else if (e.getKeyCode() == KeyEvent.VK_UP) {
+			packetToServer.event = ClientEvent.MOVE_FORWARD;
+			// Down-arrow moves backward.
+		} else if (e.getKeyCode() == KeyEvent.VK_DOWN) {
+			packetToServer.event = ClientEvent.MOVE_BACKWARD;
+			// Left-arrow turns left.
+		} else if (e.getKeyCode() == KeyEvent.VK_LEFT) {
+			packetToServer.event = ClientEvent.TURN_LEFT;
+			// Right-arrow turns right.
+		} else if (e.getKeyCode() == KeyEvent.VK_RIGHT) {
+			packetToServer.event = ClientEvent.TURN_RIGHT;
+			// Spacebar fires.
+		} else if (e.getKeyCode() == KeyEvent.VK_SPACE) {
+			packetToServer.event = ClientEvent.FIRE;
+		}
+		
+		sendToServer(packetToServer);
+		
+	}
+	
+	public synchronized void sendToServer(ClientPacket packetToServer){
+		
+		assert(out != null);
+		try {
+			seqout.writeObject(packetToServer);
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
 	}
 }
