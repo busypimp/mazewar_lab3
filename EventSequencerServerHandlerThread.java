@@ -30,9 +30,7 @@ public class EventSequencerServerHandlerThread extends Thread{
 			toClient = new ObjectOutputStream(socket.getOutputStream());
 			
 			while (( packetFromClient = (ClientPacket) fromClient.readObject()) != null) {
-				
 				switch (packetFromClient.type){
-
 					case ClientPacket.CLIENT_EVENT_SEQ:
 						sendSequence();
 						break;
@@ -40,7 +38,6 @@ public class EventSequencerServerHandlerThread extends Thread{
 						System.err.println("ERROR: Unknown packet!!");
 						System.exit(-1);
 				}
-
 			}
 			fromClient.close();
 			toClient.close();
@@ -59,7 +56,8 @@ public class EventSequencerServerHandlerThread extends Thread{
 	private synchronized void sendSequence() throws IOException {
 		ClientPacket packetToClient = new ClientPacket();
 		packetToClient.type = ClientPacket.SERVER_RESPOND_SEQ;
-		
+		packetToClient.event = packetFromClient.event;
+		packetToClient.clientName = packetFromClient.clientName;
 		packetToClient.sequence = sequenceID;
 		
 		sendToClient(packetToClient);
