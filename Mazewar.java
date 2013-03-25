@@ -173,6 +173,13 @@ public class Mazewar extends JFrame {
                 
                 
                 ch.addMaze(maze);
+                ch.registerClient(name, portMe, hostSelf);
+                try {
+					Thread.sleep(5000); // wait till everyone else has spawned
+				} catch (InterruptedException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
                 
                 // You may want to put your network initialization code somewhere in
                 // here.
@@ -185,7 +192,7 @@ public class Mazewar extends JFrame {
                 
                 guiClient.registerClientHandler(ch);
                 
-                ch.registerClient(name, portMe, hostSelf);
+                
                 
                 // Use braces to force constructors not to be called at the beginning of the
                 // constructor.
