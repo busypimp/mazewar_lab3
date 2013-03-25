@@ -6,6 +6,7 @@ import java.util.Map;
 public class ServerDataBean implements Serializable{
 	
 	HashMap nameToConnMap;
+	private int seqNumber = 0;
 	
 	public ServerDataBean(){
 		this.nameToConnMap = new HashMap();
@@ -21,5 +22,11 @@ public class ServerDataBean implements Serializable{
 	
 	public synchronized HashMap getNameToConnMap(){
 		return this.nameToConnMap;
+	}
+	
+	public synchronized int getSeqNum(){
+		int retValue = this.seqNumber;
+		this.seqNumber++;
+		return retValue;
 	}
 }

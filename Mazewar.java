@@ -150,9 +150,21 @@ public class Mazewar extends JFrame {
                 if((portID == null) || (portID.length() == 0)){
                 	Mazewar.quit();
                 }
+                
+                String portSelf = JOptionPane.showInputDialog("Enter the port for your instance");
+                int portMe = 4447;
+                if((portID == null) || (portID.length() == 0)){
+                	Mazewar.quit();
+                }
+                
+                String hostSelf = JOptionPane.showInputDialog("Enter the host for your instance");
+                if((hostSelf == null) || (hostSelf.length() == 0)){
+                	Mazewar.quit();
+                }
                 try{
                 	int port = Integer.parseInt(portID);
-                    ch = new ClientHandler(host, port, name);
+                	portMe = Integer.parseInt(portSelf);
+                    ch = new ClientHandler(host, port, name, portMe);
                 }catch(NumberFormatException e){
                 	e.printStackTrace();
                 	System.err.println("ERROR: Port needs to be an int!!");
@@ -170,14 +182,19 @@ public class Mazewar extends JFrame {
                 maze.addClient(guiClient);
                 this.addKeyListener(guiClient);
                 
+                
+                guiClient.registerClientHandler(ch);
+                
+                ch.registerClient(name, portMe, hostSelf);
+                
                 // Use braces to force constructors not to be called at the beginning of the
                 // constructor.
-                {
-                        maze.addClient(new RobotClient("Norby"));
-                        maze.addClient(new RobotClient("Robbie"));
-                        maze.addClient(new RobotClient("Clango"));
-                        maze.addClient(new RobotClient("Marvin"));
-                }
+//                {
+//                        maze.addClient(new RobotClient("Norby"));
+//                        maze.addClient(new RobotClient("Robbie"));
+//                        maze.addClient(new RobotClient("Clango"));
+//                        maze.addClient(new RobotClient("Marvin"));
+//                }
 
                 
                 // Create the panel that will display the maze.
@@ -237,6 +254,7 @@ public class Mazewar extends JFrame {
                 setVisible(true);
                 overheadPanel.repaint();
                 this.requestFocusInWindow();
+                ch.run();
         }
 
         

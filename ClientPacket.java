@@ -22,6 +22,9 @@ public class ClientPacket implements Serializable {
 
 	public static final int GENERAL_NULL = 111;
 	public static final int GENERAL_BYE = 112;
+	
+	public static final int CLIENT_REQUEST_ORIENTATION = 113;
+	public static final int CLIENT_RESPOND_ORIENTATION = 114;
 
 	//TODO add error codes
 
@@ -35,4 +38,5 @@ public class ClientPacket implements Serializable {
 //	public ServerDataBean serverData;
 	public String clientName = null;
 	public ConnectionDetails connDetails;
+	public ClientInformation info;
 }

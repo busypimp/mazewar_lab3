@@ -4,9 +4,9 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.Socket;
 import java.net.UnknownHostException;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Set;
 
 /**
  * Handles client
@@ -17,6 +17,7 @@ public class ClientHandler extends Thread{
 	
 	private Socket sock;
 	private String name;
+	private Client hostClient;
 	private int mySeqNum;
 	private Maze maze;
 
@@ -26,25 +27,25 @@ public class ClientHandler extends Thread{
 	private ObjectInputStream in;
 	private ClientPacket packetFromClient;
 	private Map nameToClientMap;
+	private Map nameToHandlerMap;
 	
-	private HashMap<Integer, ClientPacket> seqEventQueue;
-	public ClientHandler(String address, int port, String name){
+	private RemoteClientHandler rch;
+	
+	private HashMap seqEventQueue;
+	
+	public ClientHandler(String address, int port, String name, int portMe){
 		
 		try {
-			
+			this.rch = new RemoteClientHandler(portMe, this);
 			this.sock = new Socket(address, port);
 			this.out = new ObjectOutputStream(sock.getOutputStream());
 			this.in = new ObjectInputStream(sock.getInputStream());
+			
 			this.nameToClientMap = new HashMap();
-
-			registerClient(name, port, address);
+			this.nameToHandlerMap = new HashMap();
 			this.name = name;
-			this.mySeqNum = 1;
-			HashMap<Integer, ClientPacket> seqEventQueue = new HashMap<Integer, ClientPacket>() ;
-			
-			//This is saying the event sequencer should be run at the same place as the naming service server and port num is below!
-			int portSeq = port+2222;
-			
+			this.mySeqNum = 0;
+			seqEventQueue = new HashMap() ;
 		} catch (UnknownHostException e) {
 			
 			e.printStackTrace();
@@ -63,11 +64,8 @@ public class ClientHandler extends Thread{
 	
 	public void run(){
 		try{
+
 			while((packetFromClient = (ClientPacket) in.readObject()) != null){
-//			while(true){
-			/*
-				 * do something don't just stand there
-				 */
 				switch (packetFromClient.type) {
 				case ClientPacket.SERVER_ACKNOWLEDGE:
 					System.out.println("ACK'ed");
@@ -75,8 +73,8 @@ public class ClientHandler extends Thread{
 				case ClientPacket.SERVER_RESPOND_PLAYERS:
 					//processPlayerList();
 					break;
-				case ClientPacket.SERVER_EVENT_BROADCAST:
-					processSeq();
+				case ClientPacket.SERVER_EVENT_BROADCAST: // we wil only use this when a new player joins
+					processSeq(packetFromClient);
 					break;
 				case ClientPacket.SERVER_RESPOND_SEQ:
 						broadcastClients();
@@ -98,60 +96,60 @@ public class ClientHandler extends Thread{
 		}
 	}
 	
-	private void broadcastClients() {
-		//Need to know how the client names and such are kept!
-		
-		
+	private void broadcastClients() throws IOException {
+		ClientPacket packet = packetFromClient;
+		packet.type = ClientPacket.SERVER_EVENT_BROADCAST;
+		RemoteClientHandlerThread rch;
+		Object[] keys = nameToHandlerMap.keySet().toArray();
+		for(int i = 0; i < keys.length; i++){
+			rch = (RemoteClientHandlerThread) nameToHandlerMap.get(keys[i]);
+			rch.sendPacket(packet);
+		}
 	}
 	
-	private void processSeq() {
-		if(packetFromClient.sequence == (this.mySeqNum+1)) {
-			processEvent(packetFromClient);
+	public void processSeq(ClientPacket packet) {
+		
+		if(packet.sequence == (this.mySeqNum+1)) {
+			processEvent(packet);
 			this.mySeqNum++;
-			while(seqEventQueue.get(this.mySeqNum) != null){
-				processEvent(seqEventQueue.get(this.mySeqNum));
+			while(!seqEventQueue.containsKey(this.mySeqNum)){
+				processEvent((ClientPacket) seqEventQueue.get(this.mySeqNum));
 				seqEventQueue.remove(this.mySeqNum);
 				this.mySeqNum++;
 			}
 		} else {
 			//This is when the seq number we got was too big. so put in the queue!
-			seqEventQueue.put(packetFromClient.sequence, packetFromClient);
+			seqEventQueue.put(packet.sequence, packet);
 		}
 	}
 	
 	private void processEvent(ClientPacket fromClient) {
-		int event =  fromClient.event;
-		String name =  fromClient.clientName;
-		Client client = null;
-//		if(nameToClientMap.containsKey(name))
-//			client = (Client) nameToClientMap.get(name);
-		
-		//Need to know if this is in order or not.
+		int event = fromClient.event;
+		String name = fromClient.clientName;
+		Client client = (Client) nameToClientMap.get(name);
 
-			if(event == ClientEvent.FIRE){
-				assert(client != null);
-				client.fire();
-			}else if(event == ClientEvent.JOINED){
-				System.out.println(name + " joins the game");
-	//			addNewClient(packetFromClient.clientName, packetFromClient.info);
-			}else if(event == ClientEvent.MOVE_BACKWARD){
-				assert(client != null);
-				client.backup();
-			}else if(event == ClientEvent.MOVE_FORWARD){
-				assert(client != null);
-				client.forward();
-			}else if(event == ClientEvent.QUIT && name.equals(this.name)){
-				Mazewar.quit();
-			}else if(event == ClientEvent.TURN_LEFT){
-				assert(client != null);
-				client.turnLeft();
-			}else if(event == ClientEvent.TURN_RIGHT){
-				assert(client != null);
-				client.turnRight();
-			}
+		if (event == ClientEvent.FIRE) {
+			assert (client != null);
+			client.fire();
+		} else if (event == ClientEvent.JOINED) {
+			System.out.println(name + " joins the game");
+			// addNewClient(packetFromClient.clientName, packetFromClient.info);
+		} else if (event == ClientEvent.MOVE_BACKWARD) {
+			assert (client != null);
+			client.backup();
+		} else if (event == ClientEvent.MOVE_FORWARD) {
+			assert (client != null);
+			client.forward();
+		} else if (event == ClientEvent.QUIT && name.equals(this.name)) {
+			Mazewar.quit();
+		} else if (event == ClientEvent.TURN_LEFT) {
+			assert (client != null);
+			client.turnLeft();
+		} else if (event == ClientEvent.TURN_RIGHT) {
+			assert (client != null);
+			client.turnRight();
+		}
 
-//		if(client != null)
-//			updateLocation(client);
 	}
 	
 	public void registerClient(String name, int port, String address){
@@ -181,6 +179,28 @@ public class ClientHandler extends Thread{
 			e.printStackTrace();
 		}
 	}
+	
+	public synchronized boolean addClientToMap(String name, RemoteClientHandlerThread handlerThread){ //TODO add the handler thread to map
+//		return false;
+		boolean  retValue = true;
+		// client Map
+		if(this.nameToClientMap.containsKey(name) ){
+			retValue =  false;
+		}else{
+			this.nameToClientMap.put(name,new RemoteClient(name));
+			System.out.println("Added Client with name <" + name + "> to the map");
+			retValue =  true;
+		}
+		
+		// HandlerMap
+		if(this.nameToHandlerMap.containsKey(name)){
+			retValue = false;
+		}else{
+			this.nameToHandlerMap.put(name, handlerThread);
+			retValue = true;
+		}
+		return retValue;
+	}
 
 	private void requestPlayers() throws IOException, ClassNotFoundException {
 		
@@ -195,28 +215,39 @@ public class ClientHandler extends Thread{
 		if(packetFromServer.type != ClientPacket.SERVER_RESPOND_PLAYERS){
 			System.err.println("There was a problem getting list of existing players!");
 		}else{ 
-			System.out.println("Ok so the server returned a list of playaaaaas!!");//TODO put some real code here
-			// WORK IN PROGRESS 
-			ServerDataBean bean = packetFromServer.serverData;
-			HashMap nameToConnMap = bean.nameToConnMap;
-			Set names = nameToConnMap.keySet();
-			for(int i = 0; i < names.size(); i++){
-				System.out.println("Name <" + names.toArray()[i] + ">");
-				//TODO Things to do at this point
-				/*
-				 * Start a thread with each new client
-				 * first thing, ask each client for update on thier position and orientation
-				 * once you get it back, add them to the list and to the GUI
-				 * 
-				 */
-			}
+			connectToRemotePlayers(packetFromServer);
 		}
 	}
-		
-	public void registerClient(String name){
-		GUIClient client = new GUIClient(name);
-	}
 	
+	private void connectToRemotePlayers(ClientPacket packetFromServer) throws UnknownHostException, IOException {
+
+		ServerDataBean bean = packetFromServer.serverData;
+		if(bean == null){
+			return;
+		}
+		ConnectionDetails conn;
+		HashMap nameToConnMap = packetFromServer.serverData.nameToConnMap;
+		if(nameToConnMap == null)
+			return;
+		Object[] names = nameToConnMap.keySet().toArray();
+		
+		for(int i = 0; i < names.length; i++){
+			
+			System.out.println("Name <" + names[i] + ">");
+//			if(names[i].equals(this.name)){
+//				continue;
+//			}
+			
+			conn = (ConnectionDetails) nameToConnMap.get(names[i]);
+			assert(conn != null);
+			assert(rch != null);
+			System.out.println("Connecting to port <" + conn.getPortNumber() + "> and host <" + conn.getHostName() + ">");
+			rch.connectToRemoteClient(conn.getPortNumber(), conn.getHostName());
+			
+		}
+		
+	}
+
 	public void keyPressedInGUI(KeyEvent e){
 		//The server its sending to is the EventSequencerServerHandler
 		ClientPacket packetToServer = new ClientPacket();
@@ -243,17 +274,43 @@ public class ClientHandler extends Thread{
 			packetToServer.event = ClientEvent.FIRE;
 		}
 		
-		sendToServer(packetToServer);
+		try {
+			sendToServer(packetToServer);
+		} catch (IOException e1) {
+			e1.printStackTrace();
+		}
 		
 	}
 	
-	public synchronized void sendToServer(ClientPacket packetToServer){
-		
-		assert(out != null);
-		try {
-			out.writeObject(packetToServer);
-		} catch (IOException e) {
-			e.printStackTrace();
+	public synchronized void sendToServer(ClientPacket packetToServer)throws IOException{
+		assert (out != null);
+		out.writeObject(packetToServer);
+	}
+	
+	public String getClientName(){
+		return this.name;
+	}
+
+	public ClientInformation getClientOrientation() {
+		ClientInformation info = new ClientInformation();
+		info.direction = this.hostClient.getOrientation();
+		info.position = this.hostClient.getPoint();
+		info.name = this.hostClient.getName();
+		return info;
+	}
+	
+	public void spawn(ClientInformation info){
+		if(nameToClientMap.containsKey(info.name)){
+			Client client = (Client) nameToClientMap.get(info.name);
+			this.maze.addClient(client, info.position, info.direction);
+		}else{
+			System.out.println("INVALID NAME");
 		}
+		
+	}
+
+	public void registerClient(Client client) {
+		// TODO Auto-generated method stub
+		this.hostClient = client;
 	}
 }

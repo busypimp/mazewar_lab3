@@ -35,6 +35,9 @@ public class MazewarServerHandlerThread extends Thread{
 				case ClientPacket.CLIENT_REGISTER:
 					registerClient();
 					break;
+				case ClientPacket.CLIENT_EVENT_SEQ:
+					sendSequence();
+					break;
 				default:
 					System.err.println("Not a valid pakcet type!!");
 				}
@@ -47,6 +50,16 @@ public class MazewarServerHandlerThread extends Thread{
 			e.printStackTrace();
 		}
 		
+	}
+	
+	private synchronized void sendSequence() throws IOException {
+		ClientPacket packetToClient = new ClientPacket();
+		packetToClient.type = ClientPacket.SERVER_RESPOND_SEQ;
+		packetToClient.event = packetFromClient.event;
+		packetToClient.clientName = packetFromClient.clientName;
+		packetToClient.sequence = this.gameData.getSeqNum();
+		
+		sendToClient(packetToClient);
 	}
 
 

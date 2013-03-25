@@ -36,30 +36,34 @@ public class GUIClient extends LocalClient implements KeyListener {
                 super(name);
         }
         
+     
+//        public void keyPressed(KeyEvent e) {
+//                // If the user pressed Q, invoke the cleanup code and quit. 
+//                if((e.getKeyChar() == 'q') || (e.getKeyChar() == 'Q')) {
+//                        Mazewar.quit();
+//                // Up-arrow moves forward.
+//                } else if(e.getKeyCode() == KeyEvent.VK_UP) {
+//                        forward();
+//                // Down-arrow moves backward.
+//                } else if(e.getKeyCode() == KeyEvent.VK_DOWN) {
+//                        backup();
+//                // Left-arrow turns left.
+//                } else if(e.getKeyCode() == KeyEvent.VK_LEFT) {
+//                        turnLeft();
+//                // Right-arrow turns right.
+//                } else if(e.getKeyCode() == KeyEvent.VK_RIGHT) {
+//                        turnRight();
+//                // Spacebar fires.
+//                } else if(e.getKeyCode() == KeyEvent.VK_SPACE) {
+//                        fire();
+//                }
+//        }
         /**
-         * Handle a key press.
+         * Handle a key press. Just push the key pressed event to the client handler
          * @param e The {@link KeyEvent} that occurred.
          */
         public void keyPressed(KeyEvent e) {
-                // If the user pressed Q, invoke the cleanup code and quit. 
-                if((e.getKeyChar() == 'q') || (e.getKeyChar() == 'Q')) {
-                        Mazewar.quit();
-                // Up-arrow moves forward.
-                } else if(e.getKeyCode() == KeyEvent.VK_UP) {
-                        forward();
-                // Down-arrow moves backward.
-                } else if(e.getKeyCode() == KeyEvent.VK_DOWN) {
-                        backup();
-                // Left-arrow turns left.
-                } else if(e.getKeyCode() == KeyEvent.VK_LEFT) {
-                        turnLeft();
-                // Right-arrow turns right.
-                } else if(e.getKeyCode() == KeyEvent.VK_RIGHT) {
-                        turnRight();
-                // Spacebar fires.
-                } else if(e.getKeyCode() == KeyEvent.VK_SPACE) {
-                        fire();
-                }
+            getClientHandler().keyPressedInGUI(e);
         }
         
         /**

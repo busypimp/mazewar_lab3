@@ -17,6 +17,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307,
 USA.
 */
   
+import java.io.Serializable;
 import java.util.Set;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -39,6 +40,18 @@ public abstract class Client {
                 assert(maze != null);
                 assert(this.maze == null);
                 this.maze = maze;
+        }
+        
+        public void registerClientHandler(ClientHandler handler){
+        	assert(handler != null);
+        	assert(this.clientHandler == null);
+        	this.clientHandler = handler;
+        	handler.registerClient(this);
+        }
+        
+        public ClientHandler getClientHandler(){
+        	assert(this.clientHandler != null);
+        	return this.clientHandler;
         }
 
         /**
@@ -103,6 +116,12 @@ public abstract class Client {
          * presently in a maze.
          */
         protected Maze maze = null;
+        
+        /**
+         * The handler for clients
+         */
+        
+        private ClientHandler clientHandler =  null;
 
         /**
          * Maintain a set of listeners.
