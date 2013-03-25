@@ -20,7 +20,7 @@ public class RemoteClientHandlerListenerThread extends Thread{
 		System.out.println("Listener thread online!");
 		while(true){
 			try {
-				new RemoteClientHandlerThread(serverSocket.accept(), host).start();
+				new RemoteClientHandlerThread(serverSocket.accept(), host, true).start();
 			} catch (IOException e) {
 				e.printStackTrace();
 			}

@@ -38,6 +38,7 @@ public class ClientEvent implements Serializable{
         public static final int FIRE = 4;
         public static final int QUIT = 5;
         public static final int JOINED = 6;
+        public static final int KILLED = 7;
         
         /**
          * Default to 0, to be invalid.

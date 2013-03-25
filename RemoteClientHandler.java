@@ -16,7 +16,7 @@ public class RemoteClientHandler {
 	
 	public void connectToRemoteClient(int port, String hostname) throws UnknownHostException, IOException{
 		System.out.println("remote client handler thread starting for port <" + port + "> and host <"+ hostname+ ">");
-		new RemoteClientHandlerThread(new Socket(hostname, port), host).start();
+		new RemoteClientHandlerThread(new Socket(hostname, port), host, false).start();
 		System.out.println("Thread started!");
 	}
 }

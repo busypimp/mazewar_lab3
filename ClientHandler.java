@@ -108,6 +108,19 @@ public class ClientHandler extends Thread{
 		processSeq(packet);
 	}
 	
+	private void multicastPacket(ClientPacket packet){
+		try {
+			RemoteClientHandlerThread rch;
+			Object[] keys = nameToHandlerMap.keySet().toArray();
+			for (int i = 0; i < keys.length; i++) {
+				rch = (RemoteClientHandlerThread) nameToHandlerMap.get(keys[i]);
+				rch.sendPacket(packet);
+			}
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+	}
+	
 	public void processSeq(ClientPacket packet) {
 		
 		if(packet.sequence == this.mySeqNum) {
@@ -186,9 +199,7 @@ public class ClientHandler extends Thread{
 	}
 	
 	public synchronized boolean addClientToMap(String name, RemoteClientHandlerThread handlerThread){ //TODO add the handler thread to map
-//		return false;
 		boolean  retValue = true;
-		// client Map
 		if(this.nameToClientMap.containsKey(name) ){
 			retValue =  false;
 		}else{
@@ -321,6 +332,18 @@ public class ClientHandler extends Thread{
 	public void registerClient(Client client) {
 		// TODO Auto-generated method stub
 		nameToClientMap.put(client.getName(), client);
+		
+//		ClientPacket packet = new ClientPacket();
+//		packet.type = ClientPacket.CLIENT_REGISTER;
+//		packet.clientName = this.getClientName();
+//		try {
+//			Thread.sleep(1000);
+//		} catch (InterruptedException e) {
+//			// TODO Auto-generated catch block
+//			e.printStackTrace();
+//		}
+//		multicastPacket(packet);
+		
 		this.hostClient = client;
 	}
 }

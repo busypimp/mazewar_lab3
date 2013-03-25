@@ -17,16 +17,19 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307,
 USA.
 */
   
-import javax.swing.JFrame;
-import javax.swing.JScrollPane;
-import javax.swing.JTextPane;
-import javax.swing.JPanel;
-import javax.swing.JTable;
-import javax.swing.JOptionPane;
-import java.awt.GridBagLayout;
+import java.awt.Container;
+import java.awt.FlowLayout;
 import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
+import java.awt.Label;
+
 import javax.swing.BorderFactory;
-import java.io.Serializable;
+import javax.swing.JFrame;
+import javax.swing.JOptionPane;
+import javax.swing.JPanel;
+import javax.swing.JScrollPane;
+import javax.swing.JTable;
+import javax.swing.JTextPane;
 
 /**
  * The entry point and glue code for the game.  It also contains some helpful
@@ -136,6 +139,17 @@ public class Mazewar extends JFrame {
                 maze.addMazeListener(scoreModel);
                 
                 // Throw up a dialog to get the GUIClient name.
+//                JFrame frame = new JFrame();
+//                JPanel pane = new JPanel();
+//                frame.setBounds(100, 100, 300, 100);
+//                Container cone = frame.getContentPane();
+//                pane.setLayout(new FlowLayout());
+//                pane.add(new Label("Name"));
+//                
+            
+                
+                
+                
                 String name = JOptionPane.showInputDialog("Enter your name");
                 if((name == null) || (name.length() == 0)) {
                   Mazewar.quit();
@@ -174,13 +188,13 @@ public class Mazewar extends JFrame {
                 
                 ch.addMaze(maze);
                 ch.registerClient(name, portMe, hostSelf);
-                try {
-					Thread.sleep(5000); // wait till everyone else has spawned
-				} catch (InterruptedException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
-				}
-                
+//                try {
+//					Thread.sleep(5000); // wait till everyone else has spawned
+//				} catch (InterruptedException e) {
+//					// TODO Auto-generated catch block
+//					e.printStackTrace();
+//				}
+//                
                 // You may want to put your network initialization code somewhere in
                 // here.
                 

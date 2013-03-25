@@ -10,12 +10,13 @@ public class RemoteClientHandlerThread extends Thread {
 	private ObjectInputStream in;
 	private ObjectOutputStream out;
 	private ClientPacket packetFromClient;
-//	private boolean isClientRegistered = false;
+	private boolean isServer;
 
 	public RemoteClientHandlerThread(Socket incomingSocket,
-			ClientHandler hostHandler) {
+			ClientHandler hostHandler, boolean server) {
 			this.host = hostHandler;
 			this.sock = incomingSocket;
+			this.isServer = server;
 	}
 
 	public void run() {
@@ -24,8 +25,8 @@ public class RemoteClientHandlerThread extends Thread {
 			out = new ObjectOutputStream(sock.getOutputStream());
 			in = new ObjectInputStream(sock.getInputStream());
 
-			
-			introduceYourself();
+//			if(isServer)
+				introduceYourself();
 			while ((packetFromClient = (ClientPacket) in.readObject()) != null) {
 				System.out.println("Got a packet from remoteClient");
 				switch(packetFromClient.type){
@@ -95,6 +96,7 @@ public class RemoteClientHandlerThread extends Thread {
 	}
 
 	private boolean registerClient() {
+		System.out.println("New client <" + packetFromClient.clientName + ">");
 		assert (packetFromClient.clientName != null);
 //		System.out.println);
 		return host.addClientToMap(packetFromClient.clientName, this);
