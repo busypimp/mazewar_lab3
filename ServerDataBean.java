@@ -29,4 +29,10 @@ public class ServerDataBean implements Serializable{
 		this.seqNumber++;
 		return retValue;
 	}
+	
+	public synchronized int getSeqSnapshot(){
+		int retValue = this.seqNumber;
+//		this.seqNumber++;
+		return retValue;
+	}
 }

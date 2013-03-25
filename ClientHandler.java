@@ -105,14 +105,15 @@ public class ClientHandler extends Thread{
 			rch = (RemoteClientHandlerThread) nameToHandlerMap.get(keys[i]);
 			rch.sendPacket(packet);
 		}
+		processSeq(packet);
 	}
 	
 	public void processSeq(ClientPacket packet) {
 		
-		if(packet.sequence == (this.mySeqNum+1)) {
+		if(packet.sequence == this.mySeqNum) {
 			processEvent(packet);
 			this.mySeqNum++;
-			while(!seqEventQueue.containsKey(this.mySeqNum)){
+			while(seqEventQueue.containsKey(this.mySeqNum)){
 				processEvent((ClientPacket) seqEventQueue.get(this.mySeqNum));
 				seqEventQueue.remove(this.mySeqNum);
 				this.mySeqNum++;
@@ -124,6 +125,9 @@ public class ClientHandler extends Thread{
 	}
 	
 	private void processEvent(ClientPacket fromClient) {
+		if(fromClient == null)
+			return;
+		
 		int event = fromClient.event;
 		String name = fromClient.clientName;
 		Client client = (Client) nameToClientMap.get(name);
@@ -155,7 +159,7 @@ public class ClientHandler extends Thread{
 	public void registerClient(String name, int port, String address){
 		// first thing  I am going to do is add myself
 		
-		this.nameToClientMap.put(name, new GUIClient(name));
+//		this.nameToClientMap.put(name, new GUIClient(name));
 		
 		ClientPacket pack = new ClientPacket();
 		pack.type = ClientPacket.CLIENT_REGISTER;
@@ -171,6 +175,7 @@ public class ClientHandler extends Thread{
 				System.err.println("There was a problem registering the client!!");
 			}else{
 				// Server has ack'ed that we are online, now request other players
+				this.mySeqNum = packetFromServer.sequence;
 				requestPlayers();
 			}
 		} catch (IOException e) {
@@ -234,9 +239,9 @@ public class ClientHandler extends Thread{
 		for(int i = 0; i < names.length; i++){
 			
 			System.out.println("Name <" + names[i] + ">");
-//			if(names[i].equals(this.name)){
-//				continue;
-//			}
+			if(names[i].equals(this.name)){
+				continue;
+			}
 			
 			conn = (ConnectionDetails) nameToConnMap.get(names[i]);
 			assert(conn != null);
@@ -300,6 +305,10 @@ public class ClientHandler extends Thread{
 	}
 	
 	public void spawn(ClientInformation info){
+		if(info.name.equals(this.name)){
+			// it's just us again 
+			return;
+		}
 		if(nameToClientMap.containsKey(info.name)){
 			Client client = (Client) nameToClientMap.get(info.name);
 			this.maze.addClient(client, info.position, info.direction);
@@ -311,6 +320,7 @@ public class ClientHandler extends Thread{
 
 	public void registerClient(Client client) {
 		// TODO Auto-generated method stub
+		nameToClientMap.put(client.getName(), client);
 		this.hostClient = client;
 	}
 }

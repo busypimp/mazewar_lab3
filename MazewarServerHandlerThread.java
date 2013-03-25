@@ -53,10 +53,10 @@ public class MazewarServerHandlerThread extends Thread{
 	}
 	
 	private synchronized void sendSequence() throws IOException {
-		ClientPacket packetToClient = new ClientPacket();
+		ClientPacket packetToClient = packetFromClient;
 		packetToClient.type = ClientPacket.SERVER_RESPOND_SEQ;
-		packetToClient.event = packetFromClient.event;
-		packetToClient.clientName = packetFromClient.clientName;
+//		packetToClient.event = packetFromClient.event;
+//		packetToClient.clientName = packetFromClient.clientName;
 		packetToClient.sequence = this.gameData.getSeqNum();
 		
 		sendToClient(packetToClient);
@@ -74,6 +74,7 @@ public class MazewarServerHandlerThread extends Thread{
 		
 		ClientPacket packToClient = new ClientPacket();
 		packToClient.type = ClientPacket.SERVER_ACKNOWLEDGE;
+		packToClient.sequence = this.gameData.getSeqSnapshot();
 		sendToClient(packToClient);
 		
 	}
